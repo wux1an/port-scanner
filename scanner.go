@@ -35,9 +35,9 @@ func NewConfig(hosts []net.IP, ports []int, thread int, timeoutInSecond int) (*C
 }
 
 type ScanItem struct {
-	host net.IP
-	port int
-	err  error
+	Host net.IP
+	Port int
+	Err  error
 }
 
 type Scanner struct {
@@ -52,50 +52,52 @@ func NewScanner(config *Config) *Scanner {
 	}
 }
 
-func (s *Scanner) Progress() chan<- *ScanItem {
+func (s *Scanner) Progress() <-chan *ScanItem {
 	return s.progress
 }
 
 func (s Scanner) Scan() {
+	var wg sync.WaitGroup
+	var ch = make(chan interface{}, s.config.thread)
+
 	if s.config.mix {
 		for _, port := range s.config.ports {
 			for _, host := range s.config.hosts {
-				s.Scan0(&ScanItem{
-					host: host,
-					port: port,
-				})
+				s.scan0(&ScanItem{
+					Host: host,
+					Port: port,
+				}, &wg, ch)
 			}
 		}
 	} else {
 		for _, host := range s.config.hosts {
 			for _, port := range s.config.ports {
-				s.Scan0(&ScanItem{
-					host: host,
-					port: port,
-				})
+				s.scan0(&ScanItem{
+					Host: host,
+					Port: port,
+				}, &wg, ch)
 			}
 		}
 	}
+
+	wg.Wait()
+
+	close(s.progress)
 }
 
-func (s Scanner) Scan0(item *ScanItem) {
-	var wg sync.WaitGroup
-	var ch = make(chan interface{}, s.config.thread)
-
+func (s Scanner) scan0(item *ScanItem, wg *sync.WaitGroup, ch chan interface{}) {
 	ch <- nil
 	wg.Add(1)
 	go func() {
 		defer func() {
-			<-ch
+			s.progress <- item
 			wg.Done()
+			<-ch
 		}()
 
-		_, item.err = net.DialTimeout("tcp",
-			net.JoinHostPort(item.host.String(), strconv.Itoa(item.port)),
+		_, item.Err = net.DialTimeout("tcp",
+			net.JoinHostPort(item.Host.String(), strconv.Itoa(item.Port)),
 			time.Duration(s.config.timeoutInSecond)*time.Second,
 		)
 	}()
-
-	wg.Wait()
-	close(s.progress)
 }
