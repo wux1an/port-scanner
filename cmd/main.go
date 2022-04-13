@@ -28,7 +28,8 @@ type ConfigArgs struct {
 var configArgs ConfigArgs
 
 var name = filepath.Base(os.Args[0])
-var version = "v0.0.0"
+var version = "0.0.0"
+var commit = ""
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -36,7 +37,7 @@ var rootCmd = &cobra.Command{
 	Long: "A fast port scan tool based on full tcp connection",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if configArgs.PrintVersion {
-			fmt.Println(version)
+			fmt.Printf("v%s (%s)\n", version, commit)
 			return nil
 		}
 
