@@ -33,7 +33,6 @@ var version = "v0.0.0"
 var rootCmd = &cobra.Command{
 	Use:  "port-scanner",
 	Long: "A fast port scan tool based on full tcp connection",
-	// Run: func(cmd *cobra.Command, args []string) { }, // todo implement
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if configArgs.PrintVersion {
 			fmt.Println(version)
@@ -44,7 +43,7 @@ var rootCmd = &cobra.Command{
 			return errors.New(`required flag(s) "hosts" or "ports" not set`)
 		}
 
-		scan()
+		newHandler(configArgs).handle()
 
 		return nil
 	},
@@ -69,7 +68,7 @@ func init() {
 	rootCmd.Flags().IntVarP(&configArgs.ThreadArg,
 		"thread", "n", 20, "thread number")
 	rootCmd.Flags().StringVarP(&configArgs.OutputArg,
-		"output", "o", "", "file path to output the results")
+		"output", "o", "", "file path to output the opened ports")
 	rootCmd.Flags().BoolVarP(&configArgs.PrintVersion,
 		"version", "v", false, "version")
 }
