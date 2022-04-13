@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -37,6 +38,7 @@ type handler struct {
 	outputFile  *os.File
 	appendError error
 	results     map[string]map[int]int
+	start       time.Time
 }
 
 func newHandler(configArgs ConfigArgs) *handler {
@@ -106,6 +108,7 @@ func (ss *handler) handle() {
 		defer wg.Done()
 
 		s.Scan()
+		ss.start = time.Now()
 	}()
 
 	wg.Wait()
@@ -194,7 +197,26 @@ func (ss *handler) appendOutputFile(line string) {
 }
 
 func (ss *handler) buildResult(results map[string]map[int]int) string {
+	/*
+		total:  65535 ports
+		start:  2022-01-23 15:04:05  cost: 5m1s
+		finish: 2022-01-23 15:05:06
+		┌─────────────────┬────────┬───────────────────
+		│ IP              │ Opened │ Ports
+		├─────────────────┼────────┼───────────────────
+		│ 192.168.123.124 │ 65535  │ 12,34,56
+		│ 192.168.123.124 │ 65535  │ 12,34,56
+		└─────────────────┴────────┴───────────────────
+	*/
 	var builder = strings.Builder{}
+	now := time.Now()
+	builder.WriteString(gs("\n=================================================\n\n"))
+	builder.WriteString(bb("Total:  ") + bs("%d hosts  x  %d ports", len(ss.scanConfig.Hosts), len(ss.scanConfig.Ports)) + "\n")
+	builder.WriteString(bb("Start:  ") + bs(ss.start.Format("2006-01-02 15:04:05")) + bb("  Cost: ") + bs(now.Sub(ss.start).String()) + "\n")
+	builder.WriteString(bb("Finish: ") + bs(now.Format("2006-01-02 15:04:05")) + "\n\n")
+
+	builder.WriteString(cb("IP") + "               " + cb("Opened") + "  " + cb("Ports") + "\n")
+
 	for host, ports := range results {
 		var closed = 0
 
@@ -213,20 +235,17 @@ func (ss *handler) buildResult(results map[string]map[int]int) string {
 		}
 
 		sort.Ints(openedPorts)
-
-		builder.WriteString(cs("%-15s", host) + "  " +
-			gb(strconv.Itoa(len(openedPorts))) + gs(" opened") + ", " +
-			rb(strconv.Itoa(closed)) + rs(" closed") + ", " +
-			bb(strconv.Itoa(len(ports))) + bs(" total") + cb(" => "))
+		builder.WriteString(cs("%-15s", host) + "  " + gb("%5d", len(openedPorts)) + "   ")
 		for i, p := range openedPorts {
 			if sep := i != 0; sep {
-				builder.WriteString(", ")
+				builder.WriteString(" ")
 			}
 			builder.WriteString(gb(strconv.Itoa(p)))
 		}
 
 		builder.WriteString("\n")
 	}
+	builder.WriteString(gs("\n=================================================\n"))
 
 	return builder.String()
 }
