@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/fatih/color"
+	"github.com/gosuri/uiprogress"
 	"github.com/wux1an/port-scanner"
-	"log"
+	"sort"
+	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -24,7 +28,11 @@ func scan() {
 	go func() {
 		defer wg.Done()
 
-		progress(p)
+		//if len(config.Hosts) <= 10 {
+		//	multiProgressBar(p)
+		//} else {
+		singleProgressBar(*config, p)
+		//}
 	}()
 
 	go func() {
@@ -36,16 +44,91 @@ func scan() {
 	wg.Wait()
 }
 
-func progress(p <-chan *scanner.ScanItem) {
+const (
+	portOpened = 1
+	portClosed = -1
+	portNotest = 0
+)
+
+func singleProgressBar(config scanner.Config, p <-chan *scanner.ScanItem) {
+	// initialize results
+	var results = make(map[string]map[int]int, len(config.Hosts)) // ip : port : open (1 open, -1 close, 0 no test)
+	for _, host := range config.Hosts {
+		results[host.String()] = make(map[int]int, len(config.Ports))
+	}
+
+	uiprogress.Empty = ' '
+	bar := uiprogress.AddBar(len(config.Ports) * len(config.Hosts)).
+		AppendFunc(func(b *uiprogress.Bar) string {
+			return fmt.Sprintf("%s (%d/%d)", b.CompletedPercentString(), b.Current(), b.Total)
+		}).
+		PrependFunc(func(b *uiprogress.Bar) string {
+			return fmt.Sprintf("running  %s", b.TimeElapsedString())
+		})
+	uiprogress.Start()
+
 	for item := range p {
+		bar.Incr()
+
 		if item == nil {
 			continue
 		}
 
-		if item.Err == nil {
-			log.Printf("open %s:%d\n", item.Host, item.Port)
+		if opened := item.Err == nil; opened {
+			results[item.Host.String()][item.Port] = portOpened
 		} else {
-			//log.Printf("close %s:%d\n", item.Host, item.Port)
+			results[item.Host.String()][item.Port] = portClosed
 		}
 	}
+	uiprogress.Stop()
+
+	printResult(results)
+}
+
+func multiProgressBar(<-chan *scanner.ScanItem) {
+
+}
+
+var (
+	cs = color.CyanString
+	cb = color.New(color.FgCyan, color.Bold).Sprintf
+	gs = color.GreenString
+	gb = color.New(color.FgGreen, color.Bold).Sprintf
+	rs = color.RedString
+	rb = color.New(color.FgRed, color.Bold).Sprintf
+	bs = color.BlueString
+	bb = color.New(color.FgBlue, color.Bold).Sprintf
+)
+
+func printResult(results map[string]map[int]int) {
+	var builder = strings.Builder{}
+	for host, ports := range results {
+		var closed = 0
+
+		// get all opened ports
+		var openedPorts []int
+		for port, status := range ports {
+			if status == portOpened {
+				openedPorts = append(openedPorts, port)
+			} else if status == portClosed {
+				closed++
+			}
+		}
+		sort.Ints(openedPorts)
+
+		builder.WriteString(cs("%-15s", host) + "  " +
+			gb(strconv.Itoa(len(openedPorts))) + gs(" opened") + ", " +
+			rb(strconv.Itoa(closed)) + rs(" closed") + ", " +
+			bb(strconv.Itoa(len(ports))) + bs(" total") + "\n  ")
+		for i, p := range openedPorts {
+			if sep := i != 0; sep {
+				builder.WriteString(", ")
+			}
+			builder.WriteString(gb(strconv.Itoa(p)))
+		}
+
+		builder.WriteString("\n")
+	}
+
+	fmt.Println(builder.String())
 }

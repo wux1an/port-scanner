@@ -9,8 +9,8 @@ import (
 )
 
 type Config struct {
-	hosts           []net.IP
-	ports           []int
+	Hosts           []net.IP
+	Ports           []int
 	mix             bool // mix mode, disable: scan queue like 'host1:port1', 'host1:port2', enable: 'host1:port1', 'host2:port1'
 	thread          int
 	timeoutInSecond int
@@ -19,10 +19,10 @@ type Config struct {
 // NewConfig timeoutInSecond is the timeout of tcp connect
 func NewConfig(hosts []net.IP, ports []int, thread int, timeoutInSecond int) (*Config, error) {
 	if len(hosts) == 0 {
-		return nil, errors.New("no hosts specified")
+		return nil, errors.New("no Hosts specified")
 	}
 	if len(ports) == 0 {
-		return nil, errors.New("no ports specified")
+		return nil, errors.New("no Ports specified")
 	}
 	if thread < 1 {
 		return nil, errors.New("thread number is less than 1")
@@ -31,7 +31,7 @@ func NewConfig(hosts []net.IP, ports []int, thread int, timeoutInSecond int) (*C
 		return nil, errors.New("timeout is less than 0")
 	}
 
-	return &Config{hosts: hosts, ports: ports, thread: thread, timeoutInSecond: timeoutInSecond}, nil
+	return &Config{Hosts: hosts, Ports: ports, thread: thread, timeoutInSecond: timeoutInSecond}, nil
 }
 
 type ScanItem struct {
@@ -61,8 +61,8 @@ func (s Scanner) Scan() {
 	var ch = make(chan interface{}, s.config.thread)
 
 	if s.config.mix {
-		for _, port := range s.config.ports {
-			for _, host := range s.config.hosts {
+		for _, port := range s.config.Ports {
+			for _, host := range s.config.Hosts {
 				s.scan0(&ScanItem{
 					Host: host,
 					Port: port,
@@ -70,8 +70,8 @@ func (s Scanner) Scan() {
 			}
 		}
 	} else {
-		for _, host := range s.config.hosts {
-			for _, port := range s.config.ports {
+		for _, host := range s.config.Hosts {
+			for _, port := range s.config.Ports {
 				s.scan0(&ScanItem{
 					Host: host,
 					Port: port,
