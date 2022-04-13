@@ -28,11 +28,11 @@ func scan() {
 	go func() {
 		defer wg.Done()
 
-		//if len(config.Hosts) <= 10 {
-		//	multiProgressBar(p)
-		//} else {
-		singleProgressBar(*config, p)
-		//}
+		if multi := len(config.Hosts) <= 10; multi {
+			multiProgressBar(*config, p)
+		} else {
+			singleProgressBar(*config, p)
+		}
 	}()
 
 	go func() {
@@ -85,8 +85,44 @@ func singleProgressBar(config scanner.Config, p <-chan *scanner.ScanItem) {
 	printResult(results)
 }
 
-func multiProgressBar(<-chan *scanner.ScanItem) {
+func multiProgressBar(config scanner.Config, p <-chan *scanner.ScanItem) {
+	// initialize progress bars
+	var hostBarMap = make(map[string]*uiprogress.Bar, len(config.Hosts))
+	for _, host := range config.Hosts {
+		hostBarMap[host.String()] = uiprogress.AddBar(len(config.Ports)).
+			AppendFunc(func(b *uiprogress.Bar) string {
+				return fmt.Sprintf("%s (%d/%d)", b.CompletedPercentString(), b.Current(), b.Total)
+			}).
+			PrependFunc(func(b *uiprogress.Bar) string {
+				return fmt.Sprintf("%-15s  %s", host.String(), b.TimeElapsedString())
+			})
+	}
 
+	uiprogress.Empty = ' '
+	uiprogress.Start()
+
+	// initialize results
+	var results = make(map[string]map[int]int, len(config.Hosts)) // ip : port : open (1 open, -1 close, 0 no test)
+	for _, host := range config.Hosts {
+		results[host.String()] = make(map[int]int, len(config.Ports))
+	}
+
+	for item := range p {
+		hostBarMap[item.Host.String()].Incr()
+
+		if item == nil {
+			continue
+		}
+
+		if opened := item.Err == nil; opened {
+			results[item.Host.String()][item.Port] = portOpened
+		} else {
+			results[item.Host.String()][item.Port] = portClosed
+		}
+	}
+	uiprogress.Stop()
+
+	printResult(results)
 }
 
 var (

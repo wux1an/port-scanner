@@ -17,7 +17,7 @@ type Config struct {
 }
 
 // NewConfig timeoutInSecond is the timeout of tcp connect
-func NewConfig(hosts []net.IP, ports []int, thread int, timeoutInSecond int) (*Config, error) {
+func NewConfig(hosts []net.IP, ports []int, thread int, timeoutInSecond int, shuffle bool) (*Config, error) {
 	if len(hosts) == 0 {
 		return nil, errors.New("no Hosts specified")
 	}
@@ -31,7 +31,7 @@ func NewConfig(hosts []net.IP, ports []int, thread int, timeoutInSecond int) (*C
 		return nil, errors.New("timeout is less than 0")
 	}
 
-	return &Config{Hosts: hosts, Ports: ports, thread: thread, timeoutInSecond: timeoutInSecond}, nil
+	return &Config{Hosts: hosts, Ports: ports, thread: thread, timeoutInSecond: timeoutInSecond, mix: shuffle}, nil
 }
 
 type ScanItem struct {

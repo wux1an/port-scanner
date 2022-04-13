@@ -52,7 +52,7 @@ func ParseConfigArgs(configArgs ConfigArgs) (*scanner.Config, error) {
 		})
 	}
 
-	config, _ := scanner.NewConfig(hosts, ports, configArgs.ThreadArg, configArgs.TimeoutInSecondArg)
+	config, _ := scanner.NewConfig(hosts, ports, configArgs.ThreadArg, configArgs.TimeoutInSecondArg, configArgs.Shuffle)
 	return config, nil
 }
 
