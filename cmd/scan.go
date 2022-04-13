@@ -150,12 +150,17 @@ func printResult(results map[string]map[int]int) {
 				closed++
 			}
 		}
+
+		if len(openedPorts) == 0 {
+			continue
+		}
+
 		sort.Ints(openedPorts)
 
 		builder.WriteString(cs("%-15s", host) + "  " +
 			gb(strconv.Itoa(len(openedPorts))) + gs(" opened") + ", " +
 			rb(strconv.Itoa(closed)) + rs(" closed") + ", " +
-			bb(strconv.Itoa(len(ports))) + bs(" total") + "\n  ")
+			bb(strconv.Itoa(len(ports))) + bs(" total") + cb(" => "))
 		for i, p := range openedPorts {
 			if sep := i != 0; sep {
 				builder.WriteString(", ")
