@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"os"
@@ -71,4 +72,6 @@ func init() {
 		"output", "o", "", "file path to output the opened ports")
 	rootCmd.Flags().BoolVarP(&configArgs.PrintVersion,
 		"version", "v", false, "version")
+	rootCmd.Flags().BoolVar(&color.NoColor,
+		"no-color", false, "disable colorful output")
 }

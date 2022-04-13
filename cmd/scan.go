@@ -92,9 +92,10 @@ func (ss *handler) handle() {
 
 		// output all result to file
 		if configArgs.OutputArg != "" {
+			var t = color.NoColor
 			color.NoColor = true
 			result := ss.buildResult(ss.results)
-			color.NoColor = false
+			color.NoColor = t
 
 			ss.appendOutputFile("\n\n" + fmt.Sprintf(result))
 		}
