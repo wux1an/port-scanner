@@ -70,7 +70,7 @@ func (ss *handler) handle() {
 		ss.results[host.String()] = make(map[int]int, len(ss.scanConfig.Ports))
 	}
 
-	var s = scanner.NewScanner(ss.scanConfig)
+	var s, _ = scanner.NewScanner(ss.scanConfig)
 	var p = s.Progress()
 
 	var wg sync.WaitGroup

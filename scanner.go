@@ -11,27 +11,9 @@ import (
 type Config struct {
 	Hosts           []net.IP
 	Ports           []int
-	mix             bool // mix mode, disable: scan queue like 'host1:port1', 'host1:port2', enable: 'host1:port1', 'host2:port1'
-	thread          int
-	timeoutInSecond int
-}
-
-// NewConfig timeoutInSecond is the timeout of tcp connect
-func NewConfig(hosts []net.IP, ports []int, thread int, timeoutInSecond int, shuffle bool) (*Config, error) {
-	if len(hosts) == 0 {
-		return nil, errors.New("no Hosts specified")
-	}
-	if len(ports) == 0 {
-		return nil, errors.New("no Ports specified")
-	}
-	if thread < 1 {
-		return nil, errors.New("thread number is less than 1")
-	}
-	if timeoutInSecond <= 0 {
-		return nil, errors.New("timeout is less than 0")
-	}
-
-	return &Config{Hosts: hosts, Ports: ports, thread: thread, timeoutInSecond: timeoutInSecond, mix: shuffle}, nil
+	Mix             bool // mix mode, disable: scan queue like 'host1:port1', 'host1:port2', enable: 'host1:port1', 'host2:port1'
+	Thread          int
+	TimeoutInSecond int
 }
 
 type ScanItem struct {
@@ -45,11 +27,25 @@ type Scanner struct {
 	progress chan *ScanItem
 }
 
-func NewScanner(config *Config) *Scanner {
+func NewScanner(config *Config) (*Scanner, error) {
+
+	if len(config.Hosts) == 0 {
+		return nil, errors.New("no Hosts specified")
+	}
+	if len(config.Ports) == 0 {
+		return nil, errors.New("no Ports specified")
+	}
+	if config.Thread < 1 {
+		return nil, errors.New("thread number is less than 1")
+	}
+	if config.TimeoutInSecond <= 0 {
+		return nil, errors.New("timeout is less than 0")
+	}
+
 	return &Scanner{
 		config:   config,
 		progress: make(chan *ScanItem),
-	}
+	}, nil
 }
 
 func (s *Scanner) Progress() <-chan *ScanItem {
@@ -58,9 +54,9 @@ func (s *Scanner) Progress() <-chan *ScanItem {
 
 func (s Scanner) Scan() {
 	var wg sync.WaitGroup
-	var ch = make(chan interface{}, s.config.thread)
+	var ch = make(chan interface{}, s.config.Thread)
 
-	if s.config.mix {
+	if s.config.Mix {
 		for _, port := range s.config.Ports {
 			for _, host := range s.config.Hosts {
 				s.scan0(&ScanItem{
@@ -97,7 +93,7 @@ func (s Scanner) scan0(item *ScanItem, wg *sync.WaitGroup, ch chan interface{}) 
 
 		_, item.Err = net.DialTimeout("tcp",
 			net.JoinHostPort(item.Host.String(), strconv.Itoa(item.Port)),
-			time.Duration(s.config.timeoutInSecond)*time.Second,
+			time.Duration(s.config.TimeoutInSecond)*time.Second,
 		)
 	}()
 }

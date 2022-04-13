@@ -13,6 +13,8 @@ import (
 )
 
 func ParseConfigArgs(configArgs ConfigArgs) (*scanner.Config, error) {
+	var config scanner.Config
+
 	if configArgs.ThreadArg <= 0 {
 		return nil, errors.New(fmt.Sprintf("invalid thread number '%d'", configArgs.ThreadArg))
 	}
@@ -34,26 +36,29 @@ func ParseConfigArgs(configArgs ConfigArgs) (*scanner.Config, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse hosts")
 	}
-	var hosts = t.Expand()
+	config.Hosts = t.Expand()
 
 	// parse ports
-	ports, err := parsePortRange(configArgs.PortsArg)
+	config.Ports, err = parsePortRange(configArgs.PortsArg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse ports")
 	}
 
 	// shuffle if needed
 	if configArgs.Shuffle {
-		rand.Shuffle(len(hosts), func(i, j int) {
-			hosts[i], hosts[j] = hosts[j], hosts[i]
+		rand.Shuffle(len(config.Hosts), func(i, j int) {
+			config.Hosts[i], config.Hosts[j] = config.Hosts[j], config.Hosts[i]
 		})
-		rand.Shuffle(len(ports), func(i, j int) {
-			ports[i], ports[j] = ports[j], ports[i]
+		rand.Shuffle(len(config.Ports), func(i, j int) {
+			config.Ports[i], config.Ports[j] = config.Ports[j], config.Ports[i]
 		})
 	}
 
-	config, _ := scanner.NewConfig(hosts, ports, configArgs.ThreadArg, configArgs.TimeoutInSecondArg, configArgs.Shuffle)
-	return config, nil
+	config.Thread = configArgs.ThreadArg
+	config.TimeoutInSecond = configArgs.TimeoutInSecondArg
+	config.Mix = configArgs.Shuffle
+
+	return &config, nil
 }
 
 var (
