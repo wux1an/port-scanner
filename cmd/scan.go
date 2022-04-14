@@ -95,7 +95,7 @@ func (ss *handler) handle() {
 	go func() {
 		defer wg.Done()
 
-		if multi := len(ss.scanConfig.Hosts) <= 10; multi {
+		if multi := len(ss.scanConfig.Hosts) <= ss.rawArgs.Bar; multi {
 			ss.multiProgressBar(p)
 		} else {
 			ss.singleProgressBar(p)

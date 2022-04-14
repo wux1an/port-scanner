@@ -21,6 +21,7 @@ type ConfigArgs struct {
 	TimeoutInSecondArg int    // default 3 s
 	ThreadArg          int    // default 20
 	OutputArg          string // default none
+	Bar                int
 
 	PrintVersion bool
 }
@@ -69,6 +70,8 @@ func init() {
 		"timeout", "t", 3, "timeout(second) of tcp connect")
 	rootCmd.Flags().IntVarP(&configArgs.ThreadArg,
 		"thread", "n", 20, "thread number")
+	rootCmd.Flags().IntVarP(&configArgs.Bar,
+		"bar", "b", 5, "number of progress bar")
 	rootCmd.Flags().StringVarP(&configArgs.OutputArg,
 		"output", "o", "", "file path to output the opened ports")
 	rootCmd.Flags().BoolVarP(&configArgs.PrintVersion,

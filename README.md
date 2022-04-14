@@ -15,6 +15,7 @@ Examples:
   2. port-scanner -h 192.168.*.0 -p 80,443 -t 1 -n 50 -s -o result.txt
 
 Flags:
+  -b, --bar int         number of progress bar (default 5)
       --help            help for this command
   -h, --hosts string    hosts, eg: 10.0.0.1,10.0.0.5-10,192.168.1.*,192.168.10.0/24
       --no-color        disable colorful output
