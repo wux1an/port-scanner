@@ -107,8 +107,8 @@ func (ss *handler) handle() {
 	go func() {
 		defer wg.Done()
 
-		s.Scan()
 		ss.start = time.Now()
+		s.Scan()
 	}()
 
 	wg.Wait()
@@ -198,15 +198,17 @@ func (ss *handler) appendOutputFile(line string) {
 
 func (ss *handler) buildResult(results map[string]map[int]int) string {
 	/*
-		total:  65535 ports
-		start:  2022-01-23 15:04:05  cost: 5m1s
-		finish: 2022-01-23 15:05:06
-		┌─────────────────┬────────┬───────────────────
-		│ IP              │ Opened │ Ports
-		├─────────────────┼────────┼───────────────────
-		│ 192.168.123.124 │ 65535  │ 12,34,56
-		│ 192.168.123.124 │ 65535  │ 12,34,56
-		└─────────────────┴────────┴───────────────────
+		=================================================
+
+		Total:  5 hosts  x  500 ports
+		Start:  2022-04-14 10:31:51  Cost: 25.2620579s
+		Finish: 2022-04-14 10:32:16
+
+		IP               Opened  Ports
+		192.168.2.4          3   135 139 445
+		192.168.2.1          3   53 80 443
+
+		=================================================
 	*/
 	var builder = strings.Builder{}
 	now := time.Now()
