@@ -6,10 +6,12 @@ import (
 	"github.com/gosuri/uiprogress"
 	"github.com/wux1an/port-scanner"
 	"os"
+	"os/signal"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -77,6 +79,17 @@ func (ss *handler) handle() {
 
 	var wg sync.WaitGroup
 	wg.Add(2)
+
+	// ctrl+c handler
+	go func() {
+		c := make(chan os.Signal, 2)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		<-c
+		uiprogress.Stop()
+		fmt.Println("canceled by ctrl+c")
+		color.New().Println(ss.buildResult(ss.results))
+		os.Exit(0)
+	}()
 
 	// cli output
 	go func() {
