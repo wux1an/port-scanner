@@ -38,7 +38,7 @@ builds:
 changelog:
   filters:
     exclude:
-      - '^docs:'
+      - '^doc:'
       - typo
       - (?i)foo
       - '^ref'
