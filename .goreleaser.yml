@@ -35,6 +35,24 @@ builds:
     hooks:
       post: 'upx --lzma {{ .Path }}'
 
+changelog:
+  filters:
+    exclude:
+      - '^docs:'
+      - typo
+      - (?i)foo
+      - '^ref'
+      - '^style'
+  groups:
+    - title: Features
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: Others
+      order: 999
+
 archives:
   - format: binary
     replacements:
