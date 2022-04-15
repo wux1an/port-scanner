@@ -91,9 +91,13 @@ func (s Scanner) scan0(item *ScanItem, wg *sync.WaitGroup, ch chan interface{}) 
 			<-ch
 		}()
 
-		_, item.Err = net.DialTimeout("tcp",
+		var conn net.Conn
+		conn, item.Err = net.DialTimeout("tcp",
 			net.JoinHostPort(item.Host.String(), strconv.Itoa(item.Port)),
 			time.Duration(s.config.TimeoutInSecond)*time.Second,
 		)
+		if conn != nil {
+			conn.Close()
+		}
 	}()
 }
